@@ -1,0 +1,6 @@
+*.o
+*.exe
+*.out
+jacobi_secuencial
+jacobi_mpi
+output_*.txt
