@@ -4,10 +4,11 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <iomanip> // Libreria necesaria para el formato (setw, setprecision)
 
 // --- CONFIGURACION ---
 const int N = 1000;          
-const double MAX_ITER = 5000;
+const double MAX_ITER = 5000; 
 const double TOL = 1e-4;       
 
 int main(int argc, char** argv) {
@@ -19,20 +20,23 @@ int main(int argc, char** argv) {
 
     double start_time = MPI_Wtime(); 
 
-    // 1. DESCOMPOSICION
+    // 1. DESCOMPOSICION DE DOMINIO
     int rows_base = N / size;
     int remainder = N % size;
     int local_rows = (rank < remainder) ? rows_base + 1 : rows_base;
 
+    // Memoria: filas locales + 2 halos
     int size_alloc = (local_rows + 2) * N;
     std::vector<double> T_old(size_alloc, 0.0);
     std::vector<double> T_new(size_alloc, 0.0);
 
     // 2. INICIALIZACION
     if (rank == 0) {
+        // Borde superior fijo a 100 grados
         for (int j = 0; j < N; j++) T_old[1 * N + j] = 100.0; 
     }
     if (rank == size - 1) {
+        // Borde inferior fijo a 0 grados
         for (int j = 0; j < N; j++) T_old[local_rows * N + j] = 0.0; 
     }
     T_new = T_old;
@@ -45,10 +49,12 @@ int main(int argc, char** argv) {
 
     // 3. BUCLE PRINCIPAL
     while (iter < MAX_ITER) {
+        // Intercambio de Halos (Arriba)
         MPI_Sendrecv(&T_old[1 * N], N, MPI_DOUBLE, top_neighbor, 0,
                      &T_old[0], N, MPI_DOUBLE, top_neighbor, 0,
                      MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
+        // Intercambio de Halos (Abajo)
         MPI_Sendrecv(&T_old[local_rows * N], N, MPI_DOUBLE, bottom_neighbor, 0,
                      &T_old[(local_rows + 1) * N], N, MPI_DOUBLE, bottom_neighbor, 0,
                      MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -71,10 +77,11 @@ int main(int argc, char** argv) {
         }
         T_old = T_new;
 
-        // Convergencia
+        // Verificar convergencia cada 100 iteraciones
         if (iter % 100 == 0) {
             MPI_Allreduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
             
+            // Imprimir progreso
             if (rank == 0) {
                 std::cout << "Iteracion " << iter << " - Error: " << global_diff << std::endl;
             }
@@ -92,7 +99,7 @@ int main(int argc, char** argv) {
                   << " | Tiempo: " << (end_time - start_time) << " s" << std::endl;
     }
 
-    // 4. RECOLECCION
+    // 4. RECOLECCION DE DATOS
     std::vector<double> final_grid;
     std::vector<int> recvcounts;
     std::vector<int> displs;
@@ -110,22 +117,29 @@ int main(int argc, char** argv) {
         }
     }
 
+    // Recolectar matriz completa
     MPI_Gatherv(&T_old[1 * N], local_rows * N, MPI_DOUBLE,
                 final_grid.data(), recvcounts.data(), displs.data(), MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
-    // 5. GUARDAR ARCHIVO
+    // 5. GUARDAR ARCHIVO (FORMATO ORDENADO)
     if (rank == 0) {
         std::ofstream outfile("final_temp.txt");
-        outfile << "Matriz " << N << "x" << N << " (Muestreo)" << std::endl;
+        
+        outfile << "Matriz " << N << "x" << N << " (Muestreo cada 20 filas)" << std::endl;
+        
+        // Configuracion de formato: Fijo, 2 decimales
+        outfile << std::fixed << std::setprecision(2); 
+
         for (int i = 0; i < N; i += 20) { 
             for (int j = 0; j < N; j += 20) {
-                outfile << final_grid[i * N + j] << " ";
+                // setw(8) alinea cada numero en una columna de 8 espacios
+                outfile << std::setw(8) << final_grid[i * N + j] << " ";
             }
             outfile << "\n";
         }
         outfile.close();
-        std::cout << "Archivo final_temp.txt generado." << std::endl;
+        std::cout << "Archivo final_temp.txt generado" << std::endl;
     }
 
     MPI_Finalize();
