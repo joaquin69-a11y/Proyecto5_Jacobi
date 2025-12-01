@@ -55,3 +55,21 @@ Dado que el cálculo de Jacobi en la fila $i$ requiere datos de las filas $i-1$ 
 * **Implementación MPI:** Se utilizó `MPI_Sendrecv` en cada iteración para realizar el intercambio de manera bidireccional y evitar *deadlocks* (interbloqueos).
     * El rango $R$ envía su primera fila real a $R-1$ y recibe en su halo superior.
     * El rango $R$ envía su última fila real a $R+1$ y recibe en su halo inferior.
+## 5. Resultados y Análisis de Rendimiento (Semana 3)
+Se realizaron pruebas incrementando el número de procesos con una malla de tamaño $N=1000$ durante 5000 iteraciones.
+
+### Tabla de Resultados
+| Procesos (P) | Tiempo (s) | Speedup ($S = T_1/T_p$) | Eficiencia ($E = S/P$) |
+|--------------|------------|-------------------------|------------------------|
+| 1            | 116.52     | 1.00                    | 1.00 (100%)            |
+| 2            | 67.89      | 1.72                    | 0.86 (86%)             |
+| 4            | 53.26      | 2.19                    | 0.55 (55%)             |
+
+### Análisis Crítico
+Se observa una mejora significativa al pasar de 1 a 2 procesos (Speedup de 1.72), lo que indica una buena paralelaización.
+Sin embargo, al pasar a 4 procesos, la eficiencia cae al 55%. Esto ocurre debido al **Overhead de Comunicación**:
+1. El tamaño del problema ($N=1000$) es relativamente pequeño para 4 procesos, por lo que el tiempo gastado en `MPI_Sendrecv` (latencia) empieza a competir con el tiempo de cálculo.
+2. Al ejecutar en un entorno virtualizado (WSL), la gestión de múltiples procesos añade una sobrecarga adicional.
+
+### Conclusión Final
+El proyecto cumple con los objetivos: la simulación converge correctamente (validado en la Semana 2) y se logra una reducción del tiempo de ejecución superior al 50% al utilizar computación paralela con MPI.
