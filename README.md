@@ -38,3 +38,20 @@ Se utilizará una \*\*Descomposición de Dominio por Filas\*\*. La matriz $N \\t
 
 \- \[x] Repositorio inicializado.
 
+## 4. Diseño e Implementación (Semana 2)
+
+### 4.1 Descomposición del Dominio
+Para paralelizar el problema, se utilizó una descomposición espacial 1D por filas.
+* La matriz de tamaño $N \times N$ se divide entre $P$ procesos.
+* Cada proceso es responsable de calcular un bloque de aproximadamente $N/P$ filas.
+* **Manejo de residuos:** Si $N$ no es divisible exactamente por $P$, las filas sobrantes se asignan a los primeros rangos para balancear la carga.
+
+### 4.2 Comunicación de Fronteras (Halo Exchange)
+Dado que el cálculo de Jacobi en la fila $i$ requiere datos de las filas $i-1$ y $i+1$, los procesos en los bordes de su bloque local necesitan datos que residen en la memoria de otros procesos vecinos.
+
+* **Estrategia:** Se añadieron dos filas "fantasma" (halos) a la memoria local de cada proceso:
+    * `Fila 0`: Almacena la última fila del vecino superior.
+    * `Fila Local+1`: Almacena la primera fila del vecino inferior.
+* **Implementación MPI:** Se utilizó `MPI_Sendrecv` en cada iteración para realizar el intercambio de manera bidireccional y evitar *deadlocks* (interbloqueos).
+    * El rango $R$ envía su primera fila real a $R-1$ y recibe en su halo superior.
+    * El rango $R$ envía su última fila real a $R+1$ y recibe en su halo inferior.
