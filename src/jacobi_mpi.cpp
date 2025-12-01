@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <fstream>
 
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACION ---
 const int N = 1000;          
-const double MAX_ITER = 5000; // Bajamos un poco para que no esperes tanto en la prueba
+const double MAX_ITER = 5000;
 const double TOL = 1e-4;       
 
 int main(int argc, char** argv) {
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 
     double start_time = MPI_Wtime(); 
 
-    // 1. DESCOMPOSICIÓN
+    // 1. DESCOMPOSICION
     int rows_base = N / size;
     int remainder = N % size;
     int local_rows = (rank < remainder) ? rows_base + 1 : rows_base;
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     std::vector<double> T_old(size_alloc, 0.0);
     std::vector<double> T_new(size_alloc, 0.0);
 
-    // 2. INICIALIZACIÓN
+    // 2. INICIALIZACION
     if (rank == 0) {
         for (int j = 0; j < N; j++) T_old[1 * N + j] = 100.0; 
     }
@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
 
         double local_diff = 0.0;
 
+        // Calculo Jacobi
         for (int i = 1; i <= local_rows; i++) {
             if (rank == 0 && i == 1) continue; 
             if (rank == size - 1 && i == local_rows) continue;
@@ -74,7 +75,6 @@ int main(int argc, char** argv) {
         if (iter % 100 == 0) {
             MPI_Allreduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
             
-            // --- ESTO FALTABA: IMPRIMIR PROGRESO ---
             if (rank == 0) {
                 std::cout << "Iteracion " << iter << " - Error: " << global_diff << std::endl;
             }
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
                   << " | Tiempo: " << (end_time - start_time) << " s" << std::endl;
     }
 
-    // 4. RECOLECCIÓN
+    // 4. RECOLECCION
     std::vector<double> final_grid;
     std::vector<int> recvcounts;
     std::vector<int> displs;
@@ -114,6 +114,7 @@ int main(int argc, char** argv) {
                 final_grid.data(), recvcounts.data(), displs.data(), MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
+    // 5. GUARDAR ARCHIVO
     if (rank == 0) {
         std::ofstream outfile("final_temp.txt");
         outfile << "Matriz " << N << "x" << N << " (Muestreo)" << std::endl;
