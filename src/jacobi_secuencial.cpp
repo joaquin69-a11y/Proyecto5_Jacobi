@@ -6,7 +6,7 @@
 
 // Parámetros de la simulación
 const int N = 100;           // Tamaño de la malla (prueba con 100, luego 1000)
-const double MAX_ITER = 5000;// Máximo de iteraciones
+const double MAX_ITER = 20000;// Máximo de iteraciones
 const double TOL = 1e-4;     // Tolerancia para detenerse
 
 int main() {
