@@ -4,12 +4,12 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
-#include <iomanip> // Libreria necesaria para el formato (setw, setprecision)
+#include <iomanip>
 
 // --- CONFIGURACION ---
-const int N = 1000;          
-const double MAX_ITER = 5000; 
-const double TOL = 1e-4;       
+const int N = 1000;
+const double MAX_ITER = 5000;
+const double TOL = 1e-4;
 
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    double start_time = MPI_Wtime(); 
+    double start_time = MPI_Wtime();
 
     // 1. DESCOMPOSICION DE DOMINIO
     int rows_base = N / size;
@@ -33,11 +33,11 @@ int main(int argc, char** argv) {
     // 2. INICIALIZACION
     if (rank == 0) {
         // Borde superior fijo a 100 grados
-        for (int j = 0; j < N; j++) T_old[1 * N + j] = 100.0; 
+        for (int j = 0; j < N; j++) T_old[1 * N + j] = 100.0;
     }
     if (rank == size - 1) {
         // Borde inferior fijo a 0 grados
-        for (int j = 0; j < N; j++) T_old[local_rows * N + j] = 0.0; 
+        for (int j = 0; j < N; j++) T_old[local_rows * N + j] = 0.0;
     }
     T_new = T_old;
 
@@ -63,12 +63,12 @@ int main(int argc, char** argv) {
 
         // Calculo Jacobi
         for (int i = 1; i <= local_rows; i++) {
-            if (rank == 0 && i == 1) continue; 
+            if (rank == 0 && i == 1) continue;
             if (rank == size - 1 && i == local_rows) continue;
 
             for (int j = 1; j < N - 1; j++) {
                 int idx = i * N + j;
-                double val = 0.25 * (T_old[(i-1)*N + j] + T_old[(i+1)*N + j] + 
+                double val = 0.25 * (T_old[(i-1)*N + j] + T_old[(i+1)*N + j] +
                                      T_old[i*N + (j-1)] + T_old[i*N + (j+1)]);
                 T_new[idx] = val;
                 double diff = std::abs(val - T_old[idx]);
@@ -80,12 +80,12 @@ int main(int argc, char** argv) {
         // Verificar convergencia cada 100 iteraciones
         if (iter % 100 == 0) {
             MPI_Allreduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-            
+
             // Imprimir progreso
             if (rank == 0) {
                 std::cout << "Iteracion " << iter << " - Error: " << global_diff << std::endl;
             }
-            
+
             if (global_diff < TOL) break;
         }
         iter++;
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
 
     if (rank == 0) {
         std::cout << "=== FINALIZADO ===" << std::endl;
-        std::cout << "Procesos: " << size << " | Iteraciones: " << iter 
+        std::cout << "Procesos: " << size << " | Iteraciones: " << iter
                   << " | Tiempo: " << (end_time - start_time) << " s" << std::endl;
     }
 
@@ -125,13 +125,13 @@ int main(int argc, char** argv) {
     // 5. GUARDAR ARCHIVO (FORMATO ORDENADO)
     if (rank == 0) {
         std::ofstream outfile("final_temp.txt");
-        
-        outfile << "Matriz " << N << "x" << N << " (Muestreo cada 20 filas)" << std::endl;
-        
-        // Configuracion de formato: Fijo, 2 decimales
-        outfile << std::fixed << std::setprecision(2); 
 
-        for (int i = 0; i < N; i += 20) { 
+        outfile << "Matriz " << N << "x" << N << " (Muestreo cada 20 filas)" << std::endl;
+
+        // Configuracion de formato: Fijo, 2 decimales
+        outfile << std::fixed << std::setprecision(2);
+
+        for (int i = 0; i < N; i += 20) {
             for (int j = 0; j < N; j += 20) {
                 // setw(8) alinea cada numero en una columna de 8 espacios
                 outfile << std::setw(8) << final_grid[i * N + j] << " ";
