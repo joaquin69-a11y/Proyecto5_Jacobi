@@ -18,6 +18,7 @@ El sistema gestiona la comunicación entre procesos mediante intercambio de fron
 ## 3. Estructura del Proyecto
 La siguiente estructura organiza el proyecto de forma modular:
 
+```text
 Proyecto5_Jacobi/
 ├── README.md               # Informe y documentación
 ├── .gitignore              # Archivos ignorados
