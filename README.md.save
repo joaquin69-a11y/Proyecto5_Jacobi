@@ -1,0 +1,31 @@
+# Simulación de Distribución de Temperatura 2D (Método de Jacobi Paralelo)
+
+## 1. Resumen Ejecutivo
+Este proyecto implementa una simulación numérica de la difusión de calor en una placa metálica bidimensional hasta alcanzar el estado estacionario. El objetivo principal es resolver la ecuación de Laplace utilizando el **Método iterativo de Jacobi**, acelerando el tiempo de cómputo mediante técnicas de **Paralelismo de Memoria Distribuida** con la librería **OpenMPI**.
+
+El sistema utiliza descomposición de dominio 1D, gestión de fronteras con "filas fantasma" (halos) y comunicación punto a punto. Los resultados demuestran una aceleración efectiva (Speedup) al aumentar el número de procesos, validando la eficiencia del paralelismo en problemas de física computacional.
+
+---
+
+## 2. Integrantes del Grupo
+* [Escribe tu Nombre Aquí]
+* [Nombre del Compañero 1]
+* [Nombre del Compañero 2]
+* [Nombre del Compañero 3]
+
+---
+
+## 3. Estructura del Proyecto
+El código está organizado de manera modular:
+
+```text
+Proyecto5_Jacobi/
+├── README.md               # Informe Científico y documentación
+├── .gitignore              # Archivos ignorados (binarios, temporales)
+├── final_temp.txt          # Matriz de resultados (Salida del programa)
+├── graficar.py             # Script de Python para visualización (Mapa de Calor)
+├── jacobi_mpi              # Ejecutable final compilado
+└── src/
+    ├── jacobi_mpi.cpp      # CÓDIGO FINAL: Implementación paralela optimizada
+    ├── jacobi_secuencial.cpp # Versión secuencial para validación base
+    └── jacobi_mpi_setup.cpp  # Pruebas iniciales de entorno MPI
