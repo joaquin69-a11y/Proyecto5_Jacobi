@@ -1,168 +1,179 @@
-# Proyecto 5 – Simulación de Distribución de Temperatura 2D (MPI)
+Entiendo tu enojo. Tienes toda la razón, el formato se cortó y se renderizó en lugar de quedarse dentro del bloque de código para copiar.
+
+Aquí tienes el archivo **COMPLETO**, desde la primera línea hasta la última, todo dentro de un solo bloque de código para que solo tengas que copiar una vez.
+
+````markdown
+# Proyecto 5: Simulación de Distribución de Temperatura 2D (MPI)
 
 ## 1. Resumen Ejecutivo
-Este proyecto implementa una simulación numérica de la difusión de calor en una placa metálica bidimensional hasta alcanzar un estado estable, utilizando el Método de Jacobi. La solución fue paralelizada con OpenMPI empleando un modelo de memoria distribuida bajo la técnica de Descomposición del Dominio, lo que permite acelerar el cálculo distribuyendo la malla entre múltiples procesos.
-
-El sistema gestiona la comunicación entre procesos mediante intercambio de fronteras (Halo Exchange) para garantizar la consistencia matemática durante la simulación.
-
----
+Este proyecto implementa una simulación numérica de la difusión de calor en una placa metálica bidimensional ($N \times N$) hasta alcanzar el estado estacionario. La solución utiliza el **Método iterativo de Jacobi** y ha sido paralelizada utilizando **OpenMPI** bajo un modelo de memoria distribuida. El objetivo principal es acelerar el cálculo mediante la descomposición del dominio espacial y la gestión eficiente de la comunicación entre procesos vecinos (Halo Exchange).
 
 ## 2. Integrantes del Grupo
-- [Tu Nombre]  
-- [Integrante 2]  
-- [Integrante 3]  
-- [Integrante 4]
+* [Tu Nombre]
+* [Nombre Integrante 2]
+* [Nombre Integrante 3]
+* [Nombre Integrante 4]
 
 ---
 
 ## 3. Estructura del Proyecto
-La siguiente estructura organiza el proyecto de forma modular:
+El código está organizado de manera modular siguiendo la estructura sugerida:
 
 ```text
 Proyecto5_Jacobi/
-├── README.md               # Informe y documentación
-├── .gitignore              # Archivos ignorados
-├── final_temp.txt          # Matriz final resultante
-├── graficar.py             # Script de visualización (Heatmap)
-├── jacobi_mpi              # Ejecutable principal (MPI)
+├── README.md               # Informe Científico y documentación
+├── .gitignore              # Archivos ignorados (binarios, temporales)
+├── final_temp.txt          # Matriz de resultados (Salida del programa)
+├── graficar.py             # Script de Python para visualización (Mapa de Calor)
+├── jacobi_mpi              # Ejecutable final compilado
 └── src/
-    ├── jacobi_mpi.cpp          # Implementación paralela
-    ├── jacobi_secuencial.cpp   # Versión secuencial de referencia
-    └── jacobi_mpi_setup.cpp    # Pruebas iniciales con MPI
-```
----
+    ├── jacobi_mpi.cpp      # CÓDIGO FINAL: Implementación paralela optimizada
+    ├── jacobi_secuencial.cpp # Versión secuencial para validación base
+    └── jacobi_mpi_setup.cpp  # Pruebas iniciales de entorno MPI
+````
 
-# 4. Fundamento Teórico
+-----
 
-## 4.1. El Problema Físico
-Se simula una placa cuadrada de dimensión N × N con:
+## 4\. Fundamento Teórico
 
-- Borde superior: 100°C  
-- Bordes inferior, izquierdo y derecho: 0°C
+### 4.1. El Problema Físico
 
-Estas son condiciones de Dirichlet y generan un gradiente térmico natural.
+Se simula una placa cuadrada de dimensión $N \times N$. Se aplican condiciones de frontera de Dirichlet fijas:
 
----
+  * **Borde Superior:** $100^\circ C$ (Fuente de calor).
+  * **Bordes Inferior, Izquierdo y Derecho:** $0^\circ C$ (Sumideros).
 
-## 4.2. Método de Jacobi
-La actualización de la temperatura en cada punto se define como:
+### 4.2. Método de Jacobi
 
-T(i,j)^(k+1) = 1/4 [ T(i+1,j)^k + T(i-1,j)^k + T(i,j+1)^k + T(i,j-1)^k ]
+La temperatura $T$ en un punto $(i,j)$ para la iteración $k+1$ se calcula como el promedio de sus cuatro vecinos inmediatos (Arriba, Abajo, Izquierda, Derecha):
 
-El proceso iterativo continúa hasta que el error máximo global sea menor a una tolerancia o se alcance un máximo de iteraciones.
+$$T_{i,j}^{k+1} = \frac{1}{4} (T_{i-1,j}^{k} + T_{i+1,j}^{k} + T_{i,j-1}^{k} + T_{i,j+1}^{k})$$
 
----
+Este proceso iterativo continúa hasta que la diferencia máxima global entre iteraciones es menor a una tolerancia $\epsilon$ ($10^{-4}$).
 
-# 5. Diseño e Implementación Paralela
+-----
 
-## 5.1. Descomposición del Dominio
-Se utiliza una división por filas (Row Decomposition):
+## 5\. Diseño e Implementación Paralela
 
-- La matriz global de tamaño N se divide entre los procesos P.
-- Cada proceso maneja N/P filas.
-- Si existe residuo, se reparte entre los primeros procesos para balanceo de carga.
+### 5.1. Descomposición de Dominio
 
----
+Se implementó una **división por filas** (Row Decomposition). La matriz global de $N$ filas se reparte entre $P$ procesos.
 
-## 5.2. Comunicación de Fronteras (Halo Exchange)
-Para calcular una fila local, se requieren datos del proceso vecino. Por eso se añaden:
+  * Cada proceso calcula un bloque de filas locales ($N/P$).
+  * Se maneja el residuo ($N \% P$) asignando filas extra a los primeros rangos para asegurar un balanceo de carga adecuado.
 
-- Halo superior: última fila real del proceso rank − 1  
-- Halo inferior: primera fila real del proceso rank + 1  
+### 5.2. Comunicación de Fronteras (Halo Exchange)
 
-Se utiliza MPI_Sendrecv para evitar interbloqueos y permitir recibir y enviar datos simultáneamente.
+Dado que el cálculo de los bordes locales requiere datos que poseen los procesos vecinos, se implementaron **Filas Fantasma (Halos)**:
 
----
+  * **Halo Superior (Fila 0):** Almacena la última fila real del vecino $Rank-1$.
+  * **Halo Inferior (Fila N+1):** Almacena la primera fila real del vecino $Rank+1$.
 
-## 5.3. Sincronización Global
-Cada proceso calcula su error local máximo.  
-Luego se usa MPI_Allreduce con la operación MPI_MAX para obtener el error global y decidir si detener las iteraciones.
+**Estrategia MPI:** Se utilizó `MPI_Sendrecv` en cada iteración. Esta función permite enviar y recibir datos simultáneamente, evitando condiciones de carrera y *deadlocks* (interbloqueos) que podrían ocurrir con envíos bloqueantes simples.
 
----
+### 5.3. Sincronización Global
 
-## 5.4. Recolección de Resultados
-Al finalizar:
+Para verificar la convergencia, cada proceso calcula su error local máximo. Luego, se utiliza `MPI_Allreduce` con la operación `MPI_MAX` para que todos los procesos conozcan el error máximo global y decidan si detenerse.
 
-- El proceso raíz (rank 0) reconstruye la matriz completa con MPI_Gatherv.
-- Se genera el archivo final_temp.txt.
+### 5.4. Recolección de Resultados (I/O)
 
----
+Al finalizar, el proceso raíz (Rank 0) reconstruye la matriz completa utilizando `MPI_Gatherv` (necesario debido a que los procesos pueden tener diferente cantidad de filas) y escribe el archivo `final_temp.txt` con un formato ordenado y un muestreo de datos para facilitar la lectura.
 
-# 6. Instalación y Ejecución
+-----
 
-## 6.1. Requisitos
-- Git  
-- OpenMPI (mpic++, mpirun)  
-- Python 3 + numpy + matplotlib (opcional)
+## 6\. Instrucciones de Instalación y Ejecución
 
----
+Estas instrucciones permiten descargar, compilar y ejecutar el proyecto en un entorno Linux/WSL.
 
-## 6.2. Clonar el Repositorio
-git clone https://github.com/TU_USUARIO/Proyecto5_Jacobi.git  
+### 6.1. Requisitos Previos
+
+  * Git
+  * Compilador MPI (`mpic++`)
+  * Python 3 con `matplotlib` y `numpy` (Opcional, para graficar)
+
+### 6.2. Clonar el Repositorio
+
+```bash
+git clone [https://github.com/](https://github.com/)[TU_USUARIO]/Proyecto5_Jacobi.git
 cd Proyecto5_Jacobi
+```
 
----
+### 6.3. Compilación
 
-## 6.3. Compilación
+Para generar el ejecutable paralelo:
+
+```bash
 mpic++ src/jacobi_mpi.cpp -o jacobi_mpi
+```
 
----
+### 6.4. Ejecución
 
-## 6.4. Ejecución
-Ejemplo con 4 procesos:
+Para ejecutar la simulación con 4 procesos (ejemplo):
 
+```bash
 mpirun -np 4 ./jacobi_mpi
+```
 
----
+*El programa mostrará el progreso cada 100 iteraciones y el tiempo total al finalizar.*
 
-## 6.5. Visualización
+### 6.5. Visualización de Resultados
+
+Para generar el mapa de calor (gráfico):
+
+```bash
 python3 graficar.py
+```
 
-Genera: mapa_calor.png o resultado_final.png
+*Esto generará la imagen `resultado_final.png`.*
 
----
+-----
 
-# 7. Resultados y Análisis
+## 7\. Resultados y Análisis de Rendimiento
 
-## 7.1. Parámetros del experimento
-- Tamaño: 1000 × 1000  
-- Iteraciones: 5000  
-- Entorno: WSL sobre Windows  
+**Configuración del Experimento:**
 
----
+  * **Tamaño de Malla ($N$):** $1000 \times 1000$ (1 millón de celdas).
+  * **Iteraciones:** 5000 pasos fijos.
+  * **Hardware:** Entorno WSL sobre Windows.
 
-## 7.2. Tabla de Métricas
+### 7.1. Tabla de Métricas Obtenidas
 
-Procesos | Tiempo (s) | Speedup | Eficiencia
----------|------------|---------|-----------
-1        | 116.52     | 1.00    | 100%
-2        | 67.89      | 1.72    | 86%
-4        | 53.26      | 2.19    | 55%
+| Procesos ($P$) | Tiempo ($T_p$) | Speedup ($S = T_1/T_p$) | Eficiencia ($E = S/P$) |
+| :---: | :---: | :---: | :---: |
+| **1** (Secuencial) | **116.52 s** | 1.00 | 100% |
+| **2** | **67.89 s** | 1.72 | 86% |
+| **4** | **53.26 s** | 2.19 | 55% |
 
----
+### 7.2. Ejemplo de Salida Real
 
-## 7.3. Ejemplo de Salida (final_temp.txt)
+Fragmento del archivo `final_temp.txt` generado, mostrando el gradiente térmico desde la fuente (arriba) hacia el sumidero (abajo):
+
+```text
 Matriz 1000x1000 (Muestreo cada 20 filas)
-100.00   100.00   100.00   ... (Fuente de calor)
-  0.00    68.91    68.91   ... (Difusión alta)
-  0.00    23.01    23.01   ... (Difusión media)
-  0.00     0.00     0.00   ... (Zona fría)
+100.00   100.00   100.00   ... (Fuente)
+  0.00    68.91    68.91   ... (Caliente)
+  0.00    23.01    23.01   ... (Tibio)
+  0.00     0.00     0.00   ... (Frío)
+```
 
----
+### 7.3. Análisis Crítico del Rendimiento
 
-## 7.4. Análisis Crítico
-Aceleración real: el speedup de 1.72× con 2 procesos demuestra un paralelismo efectivo.
+1.  **Speedup Positivo:** Se observa una mejora significativa al pasar de 1 a 2 procesos ($1.72x$). Esto valida que la estrategia de paralelización es correcta.
+2.  **Impacto de la Comunicación:** Al aumentar a 4 procesos, la eficiencia disminuye al 55%. Esto ocurre debido al **Overhead de Comunicación**:
+      * En una malla de tamaño intermedio ($N=1000$), al dividir el trabajo entre 4, cada proceso realiza menos cálculos, haciendo que el tiempo invertido en la transferencia de datos (`MPI_Sendrecv`) sea proporcionalmente mayor.
+      * La ejecución en un entorno virtualizado (WSL) añade una latencia adicional en la gestión de procesos.
 
-Eficiencia decreciente:
-- Con más procesos, cada uno recibe menos filas (menos cómputo útil).
-- El tiempo de comunicación (MPI_Sendrecv) aumenta proporcionalmente.
-- WSL introduce latencias adicionales.
+-----
 
----
+## 8\. Conclusión
 
-# 8. Conclusiones
-- La implementación paralela converge correctamente, igual que la versión secuencial.  
-- La gestión de halos y sincronización evita condiciones de carrera e interbloqueos.  
-- Se obtiene una reducción mayor al 50% del tiempo total, demostrando la eficacia de MPI para acelerar simulaciones físicas incluso con overhead de comunicación.
+El proyecto cumple exitosamente con los requisitos funcionales y académicos:
 
+1.  **Convergencia Correcta:** La implementación paralela produce los mismos resultados físicos que la versión secuencial.
+2.  **Robustez:** El manejo de Halos y la sincronización evitan condiciones de carrera y *deadlocks*.
+3.  **Mejora de Tiempo:** Se logró reducir el tiempo de ejecución en más de un **50%** utilizando computación paralela, demostrando la eficacia de MPI para problemas de simulación física.
 
+<!-- end list -->
+
+```
+```
