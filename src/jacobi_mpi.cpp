@@ -122,24 +122,26 @@ int main(int argc, char** argv) {
                 final_grid.data(), recvcounts.data(), displs.data(), MPI_DOUBLE,
                 0, MPI_COMM_WORLD);
 
-    // 5. GUARDAR ARCHIVO (FORMATO ORDENADO)
+    // 5. GUARDAR ARCHIVO (VISTA RESUMIDA 20x20)
     if (rank == 0) {
         std::ofstream outfile("final_temp.txt");
+        
+        outfile << "--- REPORTE FINAL: Matriz Resumida (20x20) ---" << std::endl;
+        outfile << "Arriba: 100 C (Fuente) | Abajo: 0 C (Sumidero)" << std::endl;
+        outfile << std::endl;
+        
+        outfile << std::fixed << std::setprecision(1); 
 
-        outfile << "Matriz " << N << "x" << N << " (Muestreo cada 20 filas)" << std::endl;
-
-        // Configuracion de formato: Fijo, 2 decimales
-        outfile << std::fixed << std::setprecision(2);
-
-        for (int i = 0; i < N; i += 20) {
-            for (int j = 0; j < N; j += 20) {
-                // setw(8) alinea cada numero en una columna de 8 espacios
-                outfile << std::setw(8) << final_grid[i * N + j] << " ";
+        // Muestreo cada 50 filas (1000 / 50 = 20 filas mostradas)
+        for (int i = 0; i < N; i += 50) { 
+            for (int j = 0; j < N; j += 50) {
+                // setw(7) ajusta el ancho para que las columnas se vean rectas
+                outfile << std::setw(7) << final_grid[i * N + j] << " ";
             }
             outfile << "\n";
         }
         outfile.close();
-        std::cout << "Archivo final_temp.txt generado" << std::endl;
+        std::cout << "Archivo final_temp.txt generado (Formato 20x20)." << std::endl;
     }
 
     MPI_Finalize();

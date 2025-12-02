@@ -12,7 +12,7 @@ Este proyecto implementa una simulación numérica de la difusión de calor en u
 ---
 
 ## 3. Estructura del Proyecto
-El código está organizado de manera modular siguiendo la estructura sugerida:
+El código está organizado de manera modular para facilitar la navegación:
 
 ```text
 Proyecto5_Jacobi/
@@ -40,7 +40,7 @@ Se simula una placa cuadrada de dimensión $N \times N$. Se aplican condiciones 
 
 ### 4.2. Método de Jacobi
 
-La temperatura $T$ en un punto $(i,j)$ para la iteración $k+1$ se calcula como el promedio de sus cuatro vecinos inmediatos (Arriba, Abajo, Izquierda, Derecha):
+La temperatura $T$ en un punto $(i,j)$ para la iteración $k+1$ se calcula como el promedio de sus cuatro vecinos inmediatos (Arriba, Abajo, Izquierda, Derecha). La ecuación de actualización es:
 
 $$T_{i,j}^{k+1} = \frac{1}{4} (T_{i-1,j}^{k} + T_{i+1,j}^{k} + T_{i,j-1}^{k} + T_{i,j+1}^{k})$$
 
@@ -78,7 +78,7 @@ Al finalizar, el proceso raíz (Rank 0) reconstruye la matriz completa utilizand
 
 ## 6\. Instrucciones de Instalación y Ejecución
 
-Estas instrucciones permiten descargar, compilar y ejecutar el proyecto en un entorno Linux/WSL.
+Estas instrucciones permiten descargar, compilar y ejecutar el proyecto en un entorno Linux/WSL utilizando la API de OpenMPI.
 
 ### 6.1. Requisitos Previos
 
@@ -119,7 +119,7 @@ Para generar el mapa de calor (gráfico):
 python3 graficar.py
 ```
 
-*Esto generará la imagen `resultado_final.png`.*
+*Esto generará la imagen `resultado_final.png` (o `mapa_calor.png`).*
 
 -----
 
@@ -135,25 +135,27 @@ python3 graficar.py
 
 | Procesos ($P$) | Tiempo ($T_p$) | Speedup ($S = T_1/T_p$) | Eficiencia ($E = S/P$) |
 | :---: | :---: | :---: | :---: |
-| **1** (Secuencial) | **116.52 s** | 1.00 | 100% |
-| **2** | **67.89 s** | 1.72 | 86% |
-| **4** | **53.26 s** | 2.19 | 55% |
+| **1** (Secuencial) | **116.77 s** | 1.00 | 100% |
+| **2** | **67.60 s** | 1.73 | 86% |
+| **4** | **52.88 s** | 2.21 | 55% |
 
 ### 7.2. Ejemplo de Salida Real
 
-Fragmento del archivo `final_temp.txt` generado, mostrando el gradiente térmico desde la fuente (arriba) hacia el sumidero (abajo):
+Fragmento del archivo `final_temp.txt` generado, mostrando el gradiente térmico desde la fuente (arriba) hacia el sumidero (abajo) en formato resumido (20x20):
 
 ```text
-Matriz 1000x1000 (Muestreo cada 20 filas)
-100.00   100.00   100.00   ... (Fuente)
-  0.00    68.91    68.91   ... (Caliente)
-  0.00    23.01    23.01   ... (Tibio)
-  0.00     0.00     0.00   ... (Frío)
+--- REPORTE FINAL: Matriz Resumida (20x20) ---
+Arriba: 100 C (Fuente) | Abajo: 0 C (Sumidero)
+
+  100.0   100.0   100.0   ... (Fuente)
+    0.0    26.7    31.4   ... (Caliente)
+    0.0     3.5     4.4   ... (Tibio)
+    0.0     0.0     0.0   ... (Frío)
 ```
 
 ### 7.3. Análisis Crítico del Rendimiento
 
-1.  **Speedup Positivo:** Se observa una mejora significativa al pasar de 1 a 2 procesos ($1.72x$). Esto valida que la estrategia de paralelización es correcta.
+1.  **Speedup Positivo:** Se observa una mejora significativa al pasar de 1 a 2 procesos ($1.73x$). Esto valida que la estrategia de paralelización es correcta.
 2.  **Impacto de la Comunicación:** Al aumentar a 4 procesos, la eficiencia disminuye al 55%. Esto ocurre debido al **Overhead de Comunicación**:
       * En una malla de tamaño intermedio ($N=1000$), al dividir el trabajo entre 4, cada proceso realiza menos cálculos, haciendo que el tiempo invertido en la transferencia de datos (`MPI_Sendrecv`) sea proporcionalmente mayor.
       * La ejecución en un entorno virtualizado (WSL) añade una latencia adicional en la gestión de procesos.
@@ -167,3 +169,4 @@ El proyecto cumple exitosamente con los requisitos funcionales y académicos:
 1.  **Convergencia Correcta:** La implementación paralela produce los mismos resultados físicos que la versión secuencial.
 2.  **Robustez:** El manejo de Halos y la sincronización evitan condiciones de carrera y *deadlocks*.
 3.  **Mejora de Tiempo:** Se logró reducir el tiempo de ejecución en más de un **50%** utilizando computación paralela, demostrando la eficacia de MPI para problemas de simulación física.
+
