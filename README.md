@@ -1,8 +1,3 @@
-Entiendo tu enojo. Tienes toda la razón, el formato se cortó y se renderizó en lugar de quedarse dentro del bloque de código para copiar.
-
-Aquí tienes el archivo **COMPLETO**, desde la primera línea hasta la última, todo dentro de un solo bloque de código para que solo tengas que copiar una vez.
-
-````markdown
 # Proyecto 5: Simulación de Distribución de Temperatura 2D (MPI)
 
 ## 1. Resumen Ejecutivo
