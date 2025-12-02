@@ -167,8 +167,3 @@ El proyecto cumple exitosamente con los requisitos funcionales y académicos:
 1.  **Convergencia Correcta:** La implementación paralela produce los mismos resultados físicos que la versión secuencial.
 2.  **Robustez:** El manejo de Halos y la sincronización evitan condiciones de carrera y *deadlocks*.
 3.  **Mejora de Tiempo:** Se logró reducir el tiempo de ejecución en más de un **50%** utilizando computación paralela, demostrando la eficacia de MPI para problemas de simulación física.
-
-<!-- end list -->
-
-```
-```
