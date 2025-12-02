@@ -4,10 +4,10 @@
 Este proyecto implementa una simulación numérica de la difusión de calor en una placa metálica bidimensional ($N \times N$) hasta alcanzar el estado estacionario. La solución utiliza el **Método iterativo de Jacobi** y ha sido paralelizada utilizando **OpenMPI** bajo un modelo de memoria distribuida. El objetivo principal es acelerar el cálculo mediante la descomposición del dominio espacial y la gestión eficiente de la comunicación entre procesos vecinos (Halo Exchange).
 
 ## 2. Integrantes del Grupo
-* [Tu Nombre]
-* [Nombre Integrante 2]
-* [Nombre Integrante 3]
-* [Nombre Integrante 4]
+* Carlos Alberto Canahuiri Huarancca
+* Alexander Tantahuillca Navarro
+* Joaquin Luis Ibarra Cruz
+* Cristian De la cruz Nateros
 
 ---
 
