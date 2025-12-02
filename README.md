@@ -29,7 +29,7 @@ Proyecto5_Jacobi/
     ├── jacobi_mpi.cpp          # Implementación paralela
     ├── jacobi_secuencial.cpp   # Versión secuencial de referencia
     └── jacobi_mpi_setup.cpp    # Pruebas iniciales con MPI
-
+```
 ---
 
 # 4. Fundamento Teórico
