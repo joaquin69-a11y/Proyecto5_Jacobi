@@ -1,7 +1,7 @@
 # Proyecto 5: Simulación de Distribución de Temperatura 2D (MPI)
 
 ## 1. Resumen Ejecutivo
-Este proyecto implementa una simulación numérica de la difusión de calor en una placa metálica bidimensional ($N \times N$) hasta alcanzar el estado estacionario. La solución utiliza el **Método iterativo de Jacobi** y ha sido paralelizada utilizando **OpenMPI** bajo un modelo de memoria distribuida. El objetivo principal es acelerar el cálculo mediante la descomposición del dominio espacial y la gestión eficiente de la comunicación entre procesos vecinos (Halo Exchange).
+Este proyecto aborda la simulación de la difusión de calor en una placa metálica bidimensional hasta alcanzar un estado estable, empleando el Método de Jacobi 2D ($N \times N$) . El objetivo principal fue acelerar cada iteración del cálculo distribuyendo la malla 2D entre múltiples procesos (MPI) , utilizando un modelo de Memoria Distribuida mediante la Descomposición del Dominio por filas. El desafío central es la Comunicación de Fronteras (Halo Exchange), donde cada proceso necesita intercambiar las filas/columnas limítrofes con sus vecinos en cada paso de tiempo antes de poder realizar el siguiente cálculo. Este informe detalla la estrategia de paralelización, la implementación del protocolo anti-interbloqueo, y presenta un análisis crítico del rendimiento (speedup y eficiencia).
 
 ## 2. Integrantes del Grupo
 * Carlos Alberto Canahuiri Huarancca
@@ -45,7 +45,14 @@ La temperatura $T$ en un punto $(i,j)$ para la iteración $k+1$ se calcula como 
 $$T_{i,j}^{k+1} = \frac{1}{4} (T_{i-1,j}^{k} + T_{i+1,j}^{k} + T_{i,j-1}^{k} + T_{i,j+1}^{k})$$
 
 Este proceso iterativo continúa hasta que la diferencia máxima global entre iteraciones es menor a una tolerancia $\epsilon$ ($10^{-4}$).
+Se necesitan dos mallas (una actual y una nueva) para implementar Jacobi, ya que los valores de $T^k$ deben mantenerse constantes durante la actualización de toda la malla para $T^{k+1}$13.
 
+### 4.3. Descomposición de Dominio y Halos
+La malla se divide horizontalmente (por filas) para distribuir el trabajo entre los procesos MPI.
+
+El Halo (o Frontera) es la fila exterior de cada sub-matriz que pertenece al proceso vecino. Cuando la malla se divide por filas, un proceso necesita la última fila de su vecino superior y la primera fila de su vecino inferior.
+
+La comunicación del "halo" es un requisito clave para el paralelismo
 -----
 
 ## 5\. Diseño e Implementación Paralela
@@ -73,6 +80,12 @@ Para verificar la convergencia, cada proceso calcula su error local máximo. Lue
 ### 5.4. Recolección de Resultados (I/O)
 
 Al finalizar, el proceso raíz (Rank 0) reconstruye la matriz completa utilizando `MPI_Gatherv` (necesario debido a que los procesos pueden tener diferente cantidad de filas) y escribe el archivo `final_temp.txt` con un formato ordenado y un muestreo de datos para facilitar la lectura.
+
+### 5.5. Estructura del Código
+| Archivo | Contenido Clave |
+| :---: | :---: |
+| main.c |Contiene la lógica MPI (inicialización, distribución, y recolección).|
+| Jacobi.h | Clases/Funciones para la simulación: initialize_malla(), update_sequential(), y update_parallel_iter(). |
 
 -----
 
@@ -164,9 +177,13 @@ Arriba: 100 C (Fuente) | Abajo: 0 C (Sumidero)
 
 ## 8\. Conclusión
 
-El proyecto cumple exitosamente con los requisitos funcionales y académicos:
+El proyecto logró exitosamente la paralelización de la simulación de la Distribución de Temperatura 2D mediante el Método de Jacobi utilizando OpenMPI. La implementación fue robusta, cumpliendo el requisito clave de convergencia al mismo estado estable tanto en la versión secuencial como en la paralela.
+El principal logro técnico fue la implementación de la Comunicación de Fronteras (Halo Exchange), superando el desafío del interbloqueo (deadlock) mediante una estrategia de envío y recepción coordinada (par/impar) con MPI_Send y MPI_Recv. Esta robustez permitió que la simulación se ejecutara eficientemente con múltiples procesos.
+En cuanto al rendimiento, se demostró que el uso de la Descomposición del Dominio ofrece una aceleración significativa (Speedup) al reducir la carga de cálculo por proceso. El análisis reveló que, si bien la eficiencia disminuye al aumentar el número de procesos para una malla fija, este comportamiento es esperado y se debe a la creciente sobrecarga de comunicación del Halo Exchange, un factor crítico que debe ser optimizado en iteraciones futuras (por ejemplo, mediante la superposición de cálculo y comunicación con MPI_Isend/Irecv).
 
+En resumen, el proyecto valida la viabilidad del paralelismo de Memoria Distribuida para problemas de difusión de calor, proporcionando una solución eficiente y escalable:
 1.  **Convergencia Correcta:** La implementación paralela produce los mismos resultados físicos que la versión secuencial.
 2.  **Robustez:** El manejo de Halos y la sincronización evitan condiciones de carrera y *deadlocks*.
 3.  **Mejora de Tiempo:** Se logró reducir el tiempo de ejecución en más de un **50%** utilizando computación paralela, demostrando la eficacia de MPI para problemas de simulación física.
+
 
