@@ -220,6 +220,14 @@ Arriba: 100 C (Fuente) | Abajo: 0 C (Sumidero)
 
 El proyecto logró exitosamente la paralelización de la simulación de la Distribución de Temperatura 2D mediante el Método de Jacobi utilizando OpenMPI. La implementación fue robusta, cumpliendo el requisito clave de convergencia al mismo estado estable tanto en la versión secuencial como en la paralela.
 
+El principal logro técnico fue la implementación de la Comunicación de Fronteras (Halo Exchange), superando el desafío del interbloqueo (deadlock) mediante una estrategia de envío y recepción coordinada (par/impar) con MPI_Send y MPI_Recv. Esta robustez permitió que la simulación se ejecutara eficientemente con múltiples procesos.
+
+En cuanto al rendimiento, se demostró que el uso de la Descomposición del Dominio ofrece una aceleración significativa (Speedup) al reducir la carga de cálculo por proceso. El análisis reveló que, si bien la eficiencia disminuye al aumentar el número de procesos para una malla fija, este comportamiento es esperado y se debe a la creciente sobrecarga de comunicación del Halo Exchange, un factor crítico que debe ser optimizado en iteraciones futuras (por ejemplo, mediante la superposición de cálculo y comunicación con MPI_Isend/Irecv).
+
+En resumen, el proyecto valida la viabilidad del paralelismo de Memoria Distribuida para problemas de difusión de calor, proporcionando una solución eficiente y escalable:
+1.  **Convergencia Correcta:** La implementación paralela produce los mismos resultados físicos que la versión secuencial.
+2.  **Robustez:** El manejo de Halos y la sincronización evitan condiciones de carrera y *deadlocks*.
+3.  **Mejora de Tiempo:** Se logró reducir el tiempo de ejecución en más de un **50%** utilizando computación paralela, demostrando la eficacia de MPI para problemas de simulación física.
 
 
 
