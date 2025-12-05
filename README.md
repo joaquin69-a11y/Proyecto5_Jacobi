@@ -193,6 +193,33 @@ python3 graficar.py
 | **2** | **67.60 s** | 1.73 | 86% |
 | **4** | **52.88 s** | 2.21 | 55% |
 
+ ### 9.2. Ejemplo de Salida Real
+
+Fragmento del archivo `final_temp.txt` generado, mostrando el gradiente térmico desde la fuente (arriba) hacia el sumidero (abajo) en formato resumido (20x20):
+
+```text
+--- REPORTE FINAL: Matriz Resumida (20x20) ---
+Arriba: 100 C (Fuente) | Abajo: 0 C (Sumidero)
+
+  100.0   100.0   100.0   ... (Fuente)
+    0.0    26.7    31.4   ... (Caliente)
+    0.0     3.5     4.4   ... (Tibio)
+    0.0     0.0     0.0   ... (Frío)
+```
+
+### 9.3. Análisis Crítico del Rendimiento
+
+1.  **Speedup Positivo:** Se observa una mejora significativa al pasar de 1 a 2 procesos ($1.73x$). Esto valida que la estrategia de paralelización es correcta.
+2.  **Impacto de la Comunicación:** Al aumentar a 4 procesos, la eficiencia disminuye al 55%. Esto ocurre debido al **Overhead de Comunicación**:
+      * En una malla de tamaño intermedio ($N=1000$), al dividir el trabajo entre 4, cada proceso realiza menos cálculos, haciendo que el tiempo invertido en la transferencia de datos (`MPI_Sendrecv`) sea proporcionalmente mayor.
+      * La ejecución en un entorno virtualizado (WSL) añade una latencia adicional en la gestión de procesos.
+
+-----
+
+## 10\. Conclusión
+
+El proyecto logró exitosamente la paralelización de la simulación de la Distribución de Temperatura 2D mediante el Método de Jacobi utilizando OpenMPI. La implementación fue robusta, cumpliendo el requisito clave de convergencia al mismo estado estable tanto en la versión secuencial como en la paralela.
+
 
 
 
