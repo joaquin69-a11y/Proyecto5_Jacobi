@@ -143,7 +143,7 @@ Estas instrucciones permiten descargar, compilar y ejecutar el proyecto en un en
 ### 8.2. Clonar el Repositorio
 
 ```bash
-git clone [https://github.com/](https://github.com/)[TU_USUARIO]/Proyecto5_Jacobi.git
+git clone https://github.com/joaquin69-a11y/Proyecto5_Jacobi.git
 cd Proyecto5_Jacobi
 ```
 
@@ -173,7 +173,7 @@ Para generar el mapa de calor (gráfico):
 python3 graficar.py
 ```
 
-*Esto generará la imagen `resultado_final.png` (o `mapa_calor.png`).*
+*Esto generará la imagen `resultado_final.png`.*
 
 -----
 
