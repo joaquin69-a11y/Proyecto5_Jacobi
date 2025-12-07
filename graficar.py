@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Cargar datos ignorando la cabecera de texto
-data = np.loadtxt("final_temp.txt", skiprows=1)
+data = np.loadtxt("final_temp.txt", skiprows=3)
 
 # Configurar el gráfico
 plt.figure(figsize=(10, 8))
@@ -14,4 +14,4 @@ plt.ylabel('Posición Y')
 
 # Guardar imagen
 plt.savefig("resultado_final.png")
-
+print("Imagen guardada exitosamente como resultado_final.png")
